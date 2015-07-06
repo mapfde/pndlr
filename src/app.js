@@ -69,7 +69,7 @@ var geolocation = (function() {
 
 geolocation.location(function () {
   console.log('finished, loading app.');
-  var URL = 'http://mobile.bahn.de/bin/mobil/query.exe/dn?S='+ cityStart + '&Z=' +cityGoal + '&start=1';
+  var URL = 'http://mobile.bahn.de/bin/mobil/query.exe/dox?S='+ cityStart + '&Z=' +cityGoal + '&start=1';
 console.log(URL);
 //var URL = 'http://mobile.bahn.de/bin/mobil/query.exe/dox?S=mannheim&Z=stuttgart&start=1';
 
@@ -85,7 +85,10 @@ ajax(
     // Extract data
     
     var result = "";
-    var re = /class=.timetx..\sab\s..td.\s.td class=.time..\s(.*)\s.nbsp.(.*)\s..td.\s.td class=.duration lastrow. rowspan=.2..\s(.*)\s..td./g;
+//    var re = /class=.timetx..\sab\s..td.\s.td class=.time..\s(.*)\s.nbsp.(.*)\s..td.\s.td class=.duration lastrow. rowspan=.2..\s(.*)\s..td./g;
+  //var re = /td class=.overview timelink.._*?span class=.bold..(.*?)..span..*?td class=.overview tprt..(.*?).\/td>.*?td class=.overview..*?<br \/>(.*?)<\/td>/g;
+    var re = /td class=.overview timelink..*?span class=.bold..(.*?)..span..*?td class=.overview tprt..(.*?).\/td>.*?td class=.overview..*?<br \/>(.*?)<\/td>/g;
+    
     var myArray;
     
     while ((myArray = re.exec(data)) !== null){
@@ -94,13 +97,21 @@ ajax(
       var info =  myArray[2];
       var duration = myArray[3];
       
-      if (/\+\d*..span/i.test(info)) {
-        var re2 = /(\+\d*)..span/i;
+      if (/faellt.aus/i.test(info)) {
+        info = "X!";
+      }
+      else if (/<span class=\"okmsg\">(.+?)<\/span>/i.test(info)) {
+        var re2 = /<span class=\"okmsg\">(.+?)<\/span>/i;
+        var arr2 = re2.exec(info);
+        info = arr2[1];
+      }
+      else if (/<span class=\"red\">(.+?)<\/span>/i.test(info)) {
+        var re2 = /<span class=\"red\">(.+?)<\/span>/i;
         var arr2 = re2.exec(info);
         info = arr2[1];
       }
       else {
-        info = "W!";
+        info = "E!";
       }
       result += start + " (" + duration +") " + " "  + info + "\n";
       //result += "--------\n";
