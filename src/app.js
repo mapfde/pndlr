@@ -100,6 +100,9 @@ ajax(
       if (/faellt.aus/i.test(info)) {
         info = "X!";
       }
+      else if (/achtung/i.test(info)) {
+        info = "W!";
+      }
       else if (/<span class=\"okmsg\">(.+?)<\/span>/i.test(info)) {
         var re2 = /<span class=\"okmsg\">(.+?)<\/span>/i;
         var arr2 = re2.exec(info);
