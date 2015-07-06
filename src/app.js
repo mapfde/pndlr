@@ -1,21 +1,29 @@
 var UI = require('ui');
 var ajax = require('ajax');
+var Vector2 = require('vector2');
 
+// Show splash screen while waiting for data
+var splashWindow = new UI.Window();
 
-
-// Create a Card with title and subtitle
-var card = new UI.Card({
-  title:'Pndlr',
-  subtitle:'Fetching...',
-  scrollable: true
+// Text element to inform user
+var text = new UI.Text({
+  position: new Vector2(0, 0),
+  size: new Vector2(144, 168),
+  text:'PNDLR is determinig GPS',
+  font:'GOTHIC_18_BOLD',
+  color:'black',
+  textOverflow:'wrap',
+  textAlign:'center',
+  backgroundColor:'white'
 });
 
-// Display the Card
-card.show();
+// Add to splashWindow and show
+splashWindow.add(text);
+splashWindow.show();
 
 var cityStart = 'bla';
 var cityGoal = 'bla';
-  
+var coll = [];  
 
 // Where are we?
 var geolocation = (function() {
@@ -69,8 +77,25 @@ var geolocation = (function() {
 
 geolocation.location(function () {
   console.log('finished, loading app.');
+  
+  // Text element to inform user
+  var text = new UI.Text({
+  position: new Vector2(0, 0),
+  size: new Vector2(144, 168),
+  text:'PNDLR checking DB for '+ cityStart + ' -> ' + cityGoal,
+  font:'GOTHIC_18_BOLD',
+  color:'black',
+  textOverflow:'wrap',
+  textAlign:'center',
+  backgroundColor:'white'
+});
+
+// Add to splashWindow and show
+  splashWindow.add(text);
+  //splashWindow.show();
+  
   var URL = 'http://mobile.bahn.de/bin/mobil/query.exe/dox?S='+ cityStart + '&Z=' +cityGoal + '&start=1';
-console.log(URL);
+//console.log(URL);
 //var URL = 'http://mobile.bahn.de/bin/mobil/query.exe/dox?S=mannheim&Z=stuttgart&start=1';
 
 
@@ -83,19 +108,20 @@ ajax(
     console.log("Successfully fetched DB data!");
 
     // Extract data
-    
-    var result = "";
-//    var re = /class=.timetx..\sab\s..td.\s.td class=.time..\s(.*)\s.nbsp.(.*)\s..td.\s.td class=.duration lastrow. rowspan=.2..\s(.*)\s..td./g;
-  //var re = /td class=.overview timelink.._*?span class=.bold..(.*?)..span..*?td class=.overview tprt..(.*?).\/td>.*?td class=.overview..*?<br \/>(.*?)<\/td>/g;
-    var re = /td class=.overview timelink..*?span class=.bold..(.*?)..span..*?td class=.overview tprt..(.*?).\/td>.*?td class=.overview..*?<br \/>(.*?)<\/td>/g;
+    var menuitems = [];
+    //var coll = [];
+    var re = /td class=\"overview timelink\"><a href=\"(.*?)\"><span class=\"bold">(.*?)<\/span>.*?td class=\"overview tprt\"(.*?)<\/td>.*?td class=.overview..*?<br \/>(.*?)<\/td>.*?overview iphonepfeil\">(.*?)<br \/>/g;
     
     var myArray;
     
     while ((myArray = re.exec(data)) !== null){
-      
-      var start = myArray[1];
-      var info =  myArray[2];
-      var duration = myArray[3];
+      var detailUrl = myArray[1];  
+      var start = myArray[2];
+      var info =  myArray[3];
+      var duration = myArray[4];
+      var traintype = myArray[5];
+
+      coll.push(detailUrl);
       
       if (/faellt.aus/i.test(info)) {
         info = "X!";
@@ -116,13 +142,30 @@ ajax(
       else {
         info = "E!";
       }
-      result += start + " (" + duration +") " + " "  + info + "\n";
-      //result += "--------\n";
+      menuitems.push({title:start + " " + info,
+                      subtitle: traintype + " (" + duration +") ",
+                      detail: detailUrl
+                     });
+      
     }
 
-    // Show to user
-    card.subtitle(cityStart.substring(0,3) + "->" + cityGoal.substring(0,3)); //+ " lat:" + lat + " long:" +long);     
-    card.body(result);
+    // Construct Menu to show to user
+    var resultsMenu = new UI.Menu({
+      sections: [{
+      title: 'Current Connections',
+      items: menuitems
+      }]
+    });
+
+    // Show the Menu, hide the splash
+    resultsMenu.show();
+    splashWindow.hide();
+    
+    // Add an action for SELECT
+    resultsMenu.on('select', function(e) {
+    console.log('Item number ' + coll[1] + ' was pressed!');
+});
+    
   },
   function(error) {
     // Failure!
